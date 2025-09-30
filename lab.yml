@@ -215,4 +215,3 @@ submission_checklist:
   - "`data/reports/device_report.txt` exists and includes hostname/model/uptime."
 
 # noop: trigger verify workflow
-ls
