@@ -213,3 +213,5 @@ submission_checklist:
   - "Loopbacks configured and verified with saved output."
   - "Parsed data printed and included in the report."
   - "`data/reports/device_report.txt` exists and includes hostname/model/uptime."
+
+# noop: trigger verify workflow
