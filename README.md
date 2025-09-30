@@ -93,3 +93,7 @@ In this lab you’ll connect to a Cisco DevNet Always-On Catalyst device using N
 
 ## License
 © 2025 Your Name — Classroom use.
+
+# HAPPY CODING!
+
+**Sincerely, Professor Swanson**
