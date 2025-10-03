@@ -1,8 +1,299 @@
+# ==========================================
+# Course: Software Defined Networking
+# Module: Network Device Commands with Python
+# Purpose: Hands on activity for interacting with network devices using Netmiko and ntc-templates
+# Filename: lab.yml
+# Author: Sheldon Swanson
+# Version: 1.0
+# Created: 10/2025
+# Updated: 10/2025
+# Notes: Parsers ignore these comments.
+# ==========================================
 title: Lab 2 — Network Device Commands with Python
 course: Software Defined Networking
 module: Network Automation Fundamentals
 lab_number: 2
 time_estimate: 90-120 Minutes
+
+
+#====================================================
+#   ____  _____    _    ____  __  __ _____
+#  |  _ \| ____|  / \  |  _ \|  \/  | ____|
+#  | |_) |  _|   / _ \ | | | | |\/| |  _|
+#  |  _ <| |___ / ___ \| |_| | |  | | |___
+#  |_| \_\_____/_/   \_\____/|_|  |_|_____|
+#====================================================
+
+repo_tree:
+  enabled: true
+  max_depth: 3
+  ignore:
+    - ".git"
+    - ".github"
+    - "_template"
+    - "_render"
+    - "__pycache__"
+    - ".venv"
+    - "venv"
+    - "node_modules"
+    - ".vscode"
+    - ".idea"
+    - "*.pyc"
+    - "logs"
+    - "screens"
+
+readme_topic:
+  - title: "Installing Python Libraries with pip"
+    content: > 
+      Terms in Python can sometimes be up to the individual communicating. Python comes with standard 
+      built-in libraries such as `os`, `sys`, `math`, `datetime`, and `json`. However there are many 
+      community developed that can easily be downloaded, imported, and used to help us write cleaner 
+      code. Netmiko for example include paramiko so when you download netmiko it additionally has a 
+      dependency on paramiko therefore paramiko is also installed when we install netmiko. There a few 
+      methods to install a python library with the most common being the `pip` command line utility. which
+      stands for 'Python Installer Package'.
+
+      You can find more information about pip here: https://pip.pypa.io/en/stable/ or by running `pip --help`.
+      In the example below we use pip to install the netmiko library which is a multi-vendor library that simplifies
+      and standardizes the process of connecting to network devices via SSH.
+
+    code_block:
+      language: bash
+      code: |
+        pip install netmiko
+
+  - title: "Maintain the `requirements.txt` File"
+    content: > 
+      When working on a project it is common to have multiple dependencies. To make it easier to manage
+      these dependencies we can use a `requirements.txt` file. This file is simply a text file that lists
+      the libraries and their versions that are required for the project. This makes it easy for others to
+      install the same dependencies by simply running a single command.
+
+      You can create a `requirements.txt` file manually or you can generate one using the `pip freeze` command.
+      The `pip freeze` command lists all the installed packages in the current environment along with their versions.
+      You can redirect this output to a `requirements.txt` file using the following command:
+
+    code_block:
+      language: bash
+      code: |
+        pip freeze > requirements.txt
+
+    code_notes: >
+      This will create a `requirements.txt` file in the current directory with a list of all the installed packages
+      and their versions. You can then share this file with others or use it to recreate the same environment later.
+
+  - title: "Install Dependencies from `requirements.txt`"
+    content: > 
+      To install the dependencies listed in a `requirements.txt` file, you can use the following command:
+
+    code_block:
+      language: bash
+      code: |
+        pip install -r requirements.txt
+
+    code_notes: >
+      This will read the `requirements.txt` file and install all the packages listed in it.
+
+  - title: "Using Virtual Environments"
+    content: > 
+      When working on multiple Python projects, it is common to have different dependencies and versions
+      of libraries for each project. To avoid conflicts between these dependencies, it is recommended to
+      use virtual environments. A virtual environment is a self-contained directory that contains its own
+      Python interpreter and libraries.
+
+      You can create a virtual environment using the `venv` module that comes with Python. To create a virtual
+      environment, you can use the following command:
+
+    code_block:
+      language: bash
+      code: |
+        python -m venv myenv
+        source myenv/bin/activate
+        pip install -r requirements.txt
+
+    code_notes: >
+      This will create a virtual environment named `myenv` in the current directory and activate it.
+      Once the virtual environment is activated, any packages you install using `pip` will be installed
+      in the virtual environment instead of the global Python environment which is responsible for some of your
+      system operations. You can then install the dependencies listed in the `requirements.txt` file without affecting
+      other projects or system operations.
+
+  - title: "Cleanup a Virtual Environment"
+    content: > 
+      To deactivate a virtual environment and return to the global Python environment, you can use the deactivate command. 
+      This will restore your PATH and other environment variables to their original state. You can then delete the virtual 
+      environment directory if you no longer need it. If you need it back again you can always recreate it.
+
+    code_block:
+      language: bash
+      code: |
+        deactivate
+
+        rm -rf myvenv
+
+  - title: "Using the dir(), help(), and inspect Modules"
+    content: >
+      When working with Python libraries, it is often helpful to explore the available classes, methods, and functions.
+      The `dir()` function can be used to list the attributes of a module or class. The `help()` function can be used
+      to display the documentation for a module, class, or function. The `inspect` module provides several useful functions
+      to get information about live objects such as modules, classes, methods, functions, tracebacks, frame objects, and code objects.
+
+      You can use these functions to explore the Netmiko library and identify the correct device type and method to send commands to the device.
+
+    code_block:
+      language: python
+      code: |
+        import netmiko
+        help(netmiko)
+        dir(netmiko)
+
+        inspect.getmembers(netmiko)
+
+    code_notes: >
+      This will display the documentation and attributes of the Netmiko library, allowing you to identify
+      the correct device type and method to use for your project.
+
+  - title: "Getting Credentials Securely"
+    content: >
+      When working with network devices, it is important to handle credentials securely. Hardcoding
+      credentials in your scripts can lead to security vulnerabilities if the code is shared or stored
+      in a public repository. Instead, you can use the `input()` function to prompt for the username and
+      the `getpass` module to securely prompt for the password without echoing it to the terminal.
+
+    code_block:
+      language: python
+      code: |
+        import getpass
+
+        username = input("Enter your username: ")
+        password = getpass.getpass("Enter your password: ")
+
+    code_notes: >
+      This will prompt the user to enter their username and password at runtime, ensuring that the
+      credentials are not stored in the code or visible in the terminal.
+
+  - title: "Device Setup for Netmiko"
+    content: >
+      To connect to a network device using Netmiko, you need to create a device dictionary that contains
+      the necessary connection parameters. The device dictionary should include the device type, host (IP address
+      or hostname), username, and password. You can also include optional parameters such as port, secret, and
+      timeout.
+
+    code_block:
+      language: python
+      code: |
+        device = {
+          "device_type": "cisco_ios",
+          "host": "sandbox-iosxe-latest-1.cisco.com",
+          "username": username,
+          "password": password,
+          "port": 22,
+          "secret": password,
+          "timeout": 10
+        }
+
+    code_notes: >
+      This device dictionary can then be passed to the Netmiko connection class to establish a connection
+      to the device.
+
+  - title: "ConnectHandler"
+    content: >
+      The `ConnectHandler` class in Netmiko is used to establish an SSH connection to a network device.
+      You can create an instance of the `ConnectHandler` class by passing the device dictionary as an argument.
+      Once the connection is established, you can use various methods to send commands to the device and retrieve
+      the output.
+
+    code_block:
+      language: python
+      code: |
+        from netmiko import ConnectHandler
+
+        net_connect = ConnectHandler(**device)
+        output = net_connect.send_command("show ip interface brief")
+        print(output)
+
+    code_notes: >
+      This code imports the `ConnectHandler` class from the Netmiko library, creates an instance of the class
+      using the device dictionary, and sends a command to the device. The output of the command is then printed
+      to the console.
+
+  - title: "Sending Commands"
+    content: >
+      The `send_command()` method of the `ConnectHandler` class is used to send a single command to the network device
+      and retrieve the output. You can pass the command as a string argument to the method. The method returns the
+      output of the command as a string.
+
+    code_block:
+      language: python
+      code: |
+        from netmiko import ConnectHandler
+
+        net_connect = ConnectHandler(**device)
+        output = net_connect.send_command("show ip interface brief")
+        print(output)
+
+    code_notes: >
+      This code imports the `ConnectHandler` class from the Netmiko library, creates an instance of the class
+      using the device dictionary, and sends a command to the device. The output of the command is then printed
+      to the console.
+
+  - title: "TextFSM and ntc-templates"
+    content: >
+      TextFSM is a Python library that allows you to parse unstructured text into structured data using templates.
+      The ntc-templates project provides a collection of pre-defined TextFSM templates for various network devices
+      and commands. You can use these templates to parse the output of commands sent to network devices using Netmiko.
+
+      To use ntc-templates, you need to install the library and set the `NET_TEXTFSM` environment variable to point
+      to the directory containing the templates. You can then use the `parse_output()` function from the `ntc_templates.parse` module
+      to parse the command output using the appropriate template.
+
+    code_block:
+      language: python
+      code: |
+        from ntc_templates.parse import parse_output
+
+        template = "cisco_ios_show_ip_interface_brief.textfsm"
+        parsed_output = parse_output(template, output)
+        print(parsed_output)
+
+    code_notes: >
+      This code imports the `parse_output()` function from the `ntc_templates.parse` module, specifies the template to use for parsing,
+      and parses the output of the command. The structured data is then printed to the console.
+
+  - title: "f-text Strings"
+    content: >
+      f-strings, also known as formatted string literals, are a way to embed expressions inside string literals,
+      using curly braces `{}`. They were introduced in Python 3.6 and provide a more readable and concise way to format strings.
+
+      To create an f-string, you simply prefix the string with the letter `f` or `F`. Inside the string, you can include
+      any valid Python expression within curly braces, and the expression will be evaluated at runtime and inserted into the string.
+
+    code_block:
+      language: python
+      code: |
+        interface = "GigabitEthernet0/1"
+        ip_address = "192.168.1.1"
+        subnet_mask = "255.255.255.0"
+
+        config = f"""
+        interface {interface}
+          ip address {ip_address} {subnet_mask}
+        """
+        print(config)
+
+    code_notes: >
+      This code defines variables for an interface name, IP address, and subnet mask, and then uses an f-string to create a multi-line configuration string.
+      The variables are embedded within the string using curly braces, and the resulting configuration is printed to the console.
+
+#=====================================================
+#
+#   ___ _   _ ____ _____ ____  _   _  ____ _____ ___ ___  _   _ ____
+#  |_ _| \ | / ___|_   _|  _ \| | | |/ ___|_   _|_ _/ _ \| \ | / ___|
+#   | ||  \| \___ \ | | | |_) | | | | |     | |  | | | | |  \| \___ \
+#   | || |\  |___) || | |  _ <| |_| | |___  | |  | | |_| | |\  |___) |
+#  |___|_| \_|____/ |_| |_| \_\\___/ \____| |_| |___\___/|_| \_|____/
+#
+#=====================================================
 
 overview: >
   In this lab you’ll connect to a Cisco DevNet Always-On Catalyst device using Netmiko,
