@@ -1,31 +1,38 @@
 # Instructions — Lab 2 — Network Device Commands with Python
 
 ## Objectives
-- Use Netmiko to establish an SSH session to a Cisco Catalyst 9K in the Cisco DevNet Always-On Sandbox.
-- Collect credentials securely at runtime using input() and getpass.getpass().
-- Execute basic IOS “show” commands and capture output to files.
-- Implement Python error handling (try/except) for connection and command failures.
-- Push simple configuration (loopback interfaces) from Python using iterable data structures.
-- Parse unstructured CLI output into structured data with ntc-templates (TextFSM).
-- Generate a simple, formatted report using f-strings (or Jinja2, optional).
+- Use Netmiko to establish SSH sessions to Cisco network devices.
+- Collect credentials securely using `input()` and `getpass.getpass()`.
+- Execute IOS 'show' commands and capture output programmatically.
+- Parse command output with ntc-templates for structured data.
+- Use f-strings to generate readable terminal or file output.
+- Implement error handling and logging for reliability and grading.
 
 ## Prerequisites
 - Python 3.11 (via the provided dev container)
 - Accounts: GitHub, Cisco DevNet
-- Devices/Sandboxes: Cisco DevNet Always-On Catalyst (IOS-XE/9K)
+- Devices/Sandboxes: Cisco DevNet Always-On Catalyst 8k/9k Sandbox
+- Technical: - Python basics: functions, classes, exceptions, and file I/O.
+- Understanding of SSH and network device access concepts.
+- GitHub workflow: clone, commit, push, and pull request.
+- Access to Cisco DevNet Always-On Sandbox and credentials.
+- Basic familiarity with Netmiko and TextFSM templates.
+- VS Code with dev container or local Python environment.
 
 ## Overview
-In this lab you’ll connect to a Cisco DevNet Always-On Catalyst device using Netmiko, run read-only “show” commands, push a small loopback config, then parse CLI output with ntc-templates to produce a short report. The emphasis is on safe automation patterns: prompting for credentials, error handling, structured data, and clean logging.
+In this lab, you'll connect to a Cisco Catalyst 8k device in the Cisco DevNet Always-On Sandbox using the Netmiko library. You'll authenticate securely using user input and `getpass`, execute several "show" commands, capture and parse their output with `ntc-templates`, and generate clean, structured summaries using f-strings. You'll log every step so the autograder can validate markers and ensure safe, idempotent network automation practices.
 
 
-> **Before you begin:** Confirm the Always-On sandbox is online and note the current hostname/IP, SSH port, and default credentials from DevNet. Inside the dev container, verify DNS and outbound network access (`ping`, `curl ifconfig.me`).
+> **Before you begin:** Ensure your Cisco DevNet Always-On Catalyst 8k sandbox is active and reachable. Open the provided dev container or a local environment with Netmiko installed via requirements.txt. Confirm connectivity with a simple ping to the device before proceeding.
 
 
 ## Resources
-- [Cisco DevNet Always-On Sandboxes](https://developer.cisco.com/site/sandbox/) — Find the Catalyst IOS-XE device details here.- [Netmiko Documentation](https://ktbyers.github.io/netmiko/)- [NTC Templates (TextFSM)](https://github.com/networktocode/ntc-templates) — Match exact command strings to template names.
+- [Cisco DevNet Always-On Sandboxes](https://developer.cisco.com/site/sandbox/)- [Netmiko Documentation](https://ktbyers.github.io/netmiko/)- [NTC Templates (TextFSM)](https://github.com/networktocode/ntc-templates)- [getpass — Secure password input](https://docs.python.org/3/library/getpass.html)- [Python logging](https://docs.python.org/3/library/logging.html)
 ## Deliverables
-- README and INSTRUCTIONS standardized; logs and artifacts present
-- Scripts complete; required log markers present; autograder passes
+- `src/` contains: `main.py` and helper modules if used.
+- `logs/lab.log` contains required Netmiko connection and parsing markers.
+- Outputs (raw CLI or parsed data) saved under `data/raw/` or `data/reports/`.
+- Pull request open to main branch with all artifacts committed.
 - Grading: **75 points**
 
 Follow these steps in order.
@@ -33,156 +40,143 @@ Follow these steps in order.
 > **Logging Requirement:** Write progress to `logs/lab.log` as you complete each step.
 
 ## Step 1 — Clone the Repository
-**Goal:** Getting your own copy of the starter repo.
+**Goal:** Get your starter files locally.
 
 **What to do:**  
-Clone the repo and change into the directory so GitHub Classroom can grade your work in-place.
-(See your assignment link for the correct URL.)
+Clone your GitHub Classroom repo and `cd` into it.
+Review the provided folder layout: `src/`, `data/`, and `logs/`.
 
 
-**You’re done when:**  
-- You are in the new folder (`pwd` shows the repo path).
-- `git status` shows you’re on the default branch with no local changes.
+**You're done when:**  
+- Repository opened and visible in VS Code or terminal.
+- You have created a `logs/` directory if missing.
 
 
 **Log marker to add:**  
 `[LAB2_START]`
 
-## Step 2 — Open a Dev Container
-**Goal:** Open a consistent dev environment (Python libs preinstalled).
+## Step 2 — Open Dev Container
+**Goal:** Verify environment setup.
 
 **What to do:**  
-Reopen in Container and wait for the first-time build to finish. Then review the health files.
+Open the repo inside the dev container and wait for the image to finish loading.
+Run `pip list` to verify Netmiko and ntc-templates are installed.
 
 
-**You’re done when:**  
-- `logs/DEVCONTAINER_STATUS.txt` shows `Overall status: READY`.
-- `logs/devcontainer_health.log` shows DNS_OK / NET_OK / PKG_OK lines.
+**You're done when:**  
+- Python 3.11+ confirmed.
+- Both Netmiko and ntc-templates packages are listed.
+- `[STEP 2] Dev Container Started` logged to `logs/lab.log`.
 
 
 **Log marker to add:**  
-`[DEVCONTAINER_OK]`
+`[[STEP 2] Dev Container Started]`
 
-## Step 3 — Confirm Sandbox Target
-**Goal:** Identify the exact device and verify reachability from the container.
+## Step 3 — Collect Credentials Securely
+**Goal:** Prompt user for username and password safely.
 
 **What to do:**  
-Note the host/IP, port, username, and password from DevNet. Test name resolution and ping from inside the container.
+In your script, use:
+  - `username = input("Enter username: ")`
+  - `password = getpass.getpass("Enter password: ")`
+Never hardcode credentials or commit them to GitHub.
+Log `CREDENTIALS_COLLECTED` after both values are accepted.
 
 
-**You’re done when:**  
-- You can reach the host/IP (ping succeeds or IP reachable).
-- You can SSH interactively (optional sanity check).
+**You're done when:**  
+- Password entry masked in terminal.
+- Log file includes `CREDENTIALS_COLLECTED`.
 
 
 **Log marker to add:**  
-`[SANDBOX_READY]`
+`[CREDENTIALS_COLLECTED]`
 
-## Step 4 — Explore the Library Surface Area
-**Goal:** Discover the connection class, device types, and send-command method.
+## Step 4 — Connect to Device with Netmiko
+**Goal:** Establish an SSH connection to the Catalyst 8k.
 
 **What to do:**  
-In `python`, use `dir()`, `help()`, and `inspect` to explore Netmiko and identify the correct `device_type`.
+Use `ConnectHandler()` from Netmiko with parameters:
+  - device_type: "cisco_ios"
+  - host, username, password
+Wrap your connection in try/except to handle `AuthenticationException`, `NetMikoTimeoutException`, or `SSHException`.
+Log `CONNECT_OK` or `CONNECT_FAIL` accordingly.
 
 
-**You’re done when:**  
-- You can name the connection class you’ll use.
-- You can state the correct device type string for IOS/IOS-XE.
-- You know which method sends a command to the device.
+**You're done when:**  
+- SSH connection succeeds and hostname banner returned.
+- Log includes either `CONNECT_OK` or `CONNECT_FAIL`.
 
 
 **Log marker to add:**  
-`[STEP_DONE]`
+`[CONNECT_OK, CONNECT_FAIL]`
 
-## Step 5 — Establish Connection & Run a Show Command
-**Goal:** Build your first script that connects and runs one command.
+## Step 5 — Run Show Commands
+**Goal:** Collect output from the device.
 
 **What to do:**  
-Create `src/connect_basic.py`. Prompt for creds, build the device dict, connect, run `show ip interface brief`,
-print output, and save raw output to `data/raw/show_ip_int_brief.txt`. Log events to `logs/connect_basic.log`.
+Execute a few key commands such as:
+  - `show version`
+  - `show ip interface brief`
+  - `show inventory`
+Write each output to a separate file under `data/raw/`.
+Log `CMD_RUN:<command>` for each command executed.
 
 
-**You’re done when:**  
-- You see command output in the terminal.
-- `data/raw/show_ip_int_brief.txt` is non-empty.
-- `logs/connect_basic.log` shows CONNECT_OK, CMD=..., RAW_SAVED=...
+**You're done when:**  
+- Command outputs saved under `data/raw/`.
+- Log file includes three or more `CMD_RUN` markers.
 
 
 **Log marker to add:**  
-`[CONNECT_OK]`
+`[CMD_RUN]`
 
-## Step 6 — Add Error Handling
-**Goal:** Handle bad creds, timeouts, and SSH failures gracefully.
+## Step 6 — Parse Output with NTC Templates
+**Goal:** Convert unstructured CLI output into structured data.
 
 **What to do:**  
-Create `src/connect_with_errors.py`. Wrap connect/command in try/except; print clear messages; log an exit-with-error line.
+Import `ntc_templates.parse_output()` or TextFSM-based helpers.
+Parse each output and verify structured keys/values.
+Log `PARSE_OK:<command>` or `PARSE_FAIL:<command>` accordingly.
 
 
-**You’re done when:**  
-- A friendly error shows for bad password and for unreachable host.
-- `logs/connect_with_errors.log` shows one of: AuthenticationException / NetMikoTimeoutException / SSHException and EXIT_WITH_ERROR.
+**You're done when:**  
+- Parsed data validated (non-empty lists or dicts).
+- Log includes all `PARSE_OK` markers for executed commands.
 
 
 **Log marker to add:**  
-`[EXIT_WITH_ERROR]`
+`[PARSE_OK]`
 
-## Step 7 — Automate Loopback Configuration
-**Goal:** Push small, repeatable config from structured data and verify.
+## Step 7 — Generate Report and Summary
+**Goal:** Use f-strings to summarize parsed device info.
 
 **What to do:**  
-Create `src/add_loopbacks.py`. Iterate a list of dictionaries to add Loopbacks, verify via show command,
-and save verification to `data/raw/verify_loopbacks.txt`. Log one line per interface.
+Extract key facts like hostname, model, version, and interface states.
+Compose a formatted message using f-strings and print it to the terminal.
+Optionally save to `data/reports/device_summary.txt`.
+Log `REPORT_SAVED` once the file is written.
 
 
-**You’re done when:**  
-- Loopbacks appear in device output.
-- `data/raw/verify_loopbacks.txt` exists and is non-empty.
-- `logs/add_loopbacks.log` shows CFG_APPLIED lines and a VERIFY_OK line.
+**You're done when:**  
+- Device summary printed and/or saved.
+- Log includes `REPORT_SAVED`.
 
 
 **Log marker to add:**  
-`[CFG_APPLIED count=<n>]`
+`[REPORT_SAVED]`
 
-## Step 8 — Parse CLI Output with ntc-templates
-**Goal:** Convert raw CLI to structured data with TextFSM templates.
-
-**What to do:**  
-Create `src/parse_and_report.py`. Run show commands and parse with ntc-templates; pretty-print the structured data.
-
-
-**You’re done when:**  
-- Terminal shows structured data.
-- `logs/parse_and_report.log` shows PARSE_OK and PPRINT_OK.
-
-
-**Log marker to add:**  
-`[PARSE_OK command="show ip interface brief"]`
-
-## Step 9 — Generate a Short Report
-**Goal:** Produce a readable summary file.
+## Step 8 — Refactor, Log, and Submit
+**Goal:** Ensure consistent structure and final submission.
 
 **What to do:**  
-In the same script, build a brief report (hostname, model, uptime, up/up count) and save to `data/reports/device_report.txt`.
+Verify main program flow under `if __name__ == "__main__":`.
+Close SSH session gracefully and log `LAB2_END`.
+Commit all changes, push to GitHub, and open a pull request.
 
 
-**You’re done when:**  
-- `data/reports/device_report.txt` exists with the key fields.
-- `logs/parse_and_report.log` shows REPORT_SAVED=...
-
-
-**Log marker to add:**  
-`[REPORT_SAVED=data/reports/device_report.txt]`
-
-## Step 10 — Commit, Push, Verify
-**Goal:** Submit and verify in GitHub Classroom.
-
-**What to do:**  
-Commit all changes and push. Open the Actions tab in your repo and review the autograder run.
-
-
-**You’re done when:**  
-- Actions shows green for this lab.
-- Repo contains all required scripts, raw outputs, report, and logs; health files show READY.
+**You're done when:**  
+- PR opened with complete code and logs.
+- Autograder markers found in `logs/lab.log`.
 
 
 **Log marker to add:**  
@@ -190,67 +184,55 @@ Commit all changes and push. Open the Actions tab in your repo and review the au
 
 
 ## FAQ
-**Q:** The device type confuses me—`cisco_ios` or `cisco_xe`?  
-**A:** Use `cisco_ios` for most IOS-XE Catalyst devices with Netmiko; verify by checking Netmiko’s supported types.
+**Q:** What if my connection times out?  
+**A:** Verify the sandbox is active and use the correct IP or hostname. Increase `timeout=10` if needed.
 
-**Q:** Parsing returns empty lists—what gives?  
-**A:** Ensure the command string matches the template exactly (e.g., `show ip interface brief`, not an alias).
+**Q:** Why do I get empty parsed output?  
+**A:** Ensure the command matches an existing NTC template exactly—no aliases.
 
-**Q:** Where do logs and outputs go?  
-**A:** Logs under `logs/`, raw CLI under `data/raw/`, and your final report under `data/reports/`.
+**Q:** Can I print instead of saving a report?  
+**A:** Yes, printing to terminal is fine as long as `REPORT_SAVED` is logged.
 
 
 ## 🔧 Troubleshooting & Pro Tips
-**Dev Container Didn’t Install Dependencies**  
-*Symptom:* ModuleNotFoundError for netmiko or ntc_templates when running code.  
-*Fix:* Open in devcontainer; verify with `pip list`. If missing, run `pip install -r requirements.txt`.
+**Connection Failures**  
+*Symptom:* AuthenticationException or SSHException raised.  
+*Fix:* Double-check credentials and host reachability; ensure SSH is enabled.
 
-**Wrong Hostname or IP Address**  
-*Symptom:* Connection times out or immediately fails.  
-*Fix:* Use the exact host/IP from the DevNet page. If hostname fails, try the raw IP; verify DNS with `ping`.
-
-**Incorrect Device Type**  
-*Symptom:* Login fails or 'Authentication to device failed'.  
-*Fix:* Confirm exact `device_type` from Netmiko (e.g., `cisco_ios` / `cisco_xe`). Check with `dir(netmiko)`.
-
-**Hard-Coded Credentials**  
-*Symptom:* Secrets visible in Git history.  
-*Fix:* Use `input()` and `getpass.getpass()`; rotate credentials if accidentally committed.
-
-**Empty Parsed Data**  
-*Symptom:* `parse_output()` returns [] or IndexError.  
-*Fix:* Match the template’s expected command exactly (e.g., `show ip interface brief`).
+**Template Parsing Errors**  
+*Symptom:* Returned list is empty.  
+*Fix:* Command syntax must exactly match template definitions.
 
 **File Writing Errors**  
-*Symptom:* FileNotFoundError or empty outputs.  
-*Fix:* Write to the correct relative paths under `data/` and `logs/`.
+*Symptom:* FileNotFoundError when saving under data/.  
+*Fix:* Ensure directories exist and use relative paths from repo root.
+
+**Logging Not Written**  
+*Symptom:* `logs/lab.log` missing or empty.  
+*Fix:* Call `logging.basicConfig(filename='logs/lab.log', level=logging.INFO)` once at startup.
 
 
 ## Grading Breakdown
 | Step | Requirement | Points |
 |---|---|---|
-| 1. Setup | Container opens and packages installed | 5 |
-| 2. Explore library | Show methods or details from Netmiko | 5 |
-| 3. Secure login | Use input for username and hidden password | 4 |
-| 3. Secure login | Device dictionary has type, host, username, password | 4 |
-| 4. Connect | Successful connection made to device | 5 |
-| 5. Show command | Run a show command and save raw output to file | 5 |
-| 6. Error handling | Script shows clear error message for bad login or timeout | 8 |
-| 7. Loopback config | Add loopback from list of dictionaries | 8 |
-| 7. Loopback config | Show command verifies loopbacks and saves to file | 6 |
-| 8. Parse output | Use templates to parse show command into structured data | 7 |
-| 8. Parse output | Print structured data in clear format | 3 |
-| 9. Report | Create and save formatted report with key device details | 10 |
-| All steps | Logs created with start and end, no secrets shown | 5 |
+| Step 2 | Dev Container opened; packages verified | 5 |
+| Step 3 | Credentials collected securely (`getpass` used) | 5 |
+| Step 4 | Successful connection to device (`CONNECT_OK`) | 10 |
+| Step 5 | Three or more commands executed (`CMD_RUN` markers) | 10 |
+| Step 6 | All outputs parsed successfully (`PARSE_OK` markers) | 10 |
+| Step 7 | Readable report printed/saved (`REPORT_SAVED`) | 10 |
+| Step 4–7 | Handled exceptions gracefully and logged results | 5 |
+| Step 8 | PR submitted; all autograder markers present | 20 |
 | **Total** |  | **75** |
 
 ## Autograder Notes
 - Log file: `logs/lab.log`
-- Required markers: `LAB2_START`, `DEVCONTAINER_OK`, `PKG_OK: netmiko`, `PKG_OK: ntc-templates`, `CONNECT_OK`, `CMD=show ip interface brief`, `RAW_SAVED`, `ERR=AuthenticationException`, `ERR=NetMikoTimeoutException`, `ERR=SSHException`, `CFG_APPLIED`, `VERIFY_OK`, `PARSE_OK platform=cisco command="show ip interface brief"`, `PPRINT_OK`, `REPORT_SAVED`, `LAB2_END`
+- Required markers: `LAB2_START`, `[STEP 2] Dev Container Started`, `CREDENTIALS_COLLECTED`, `CONNECT_OK`, `CMD_RUN`, `PARSE_OK`, `REPORT_SAVED`, `LAB2_END`
 
 ## Submission Checklist
-- [ ] Logs show start/end and required markers without secrets.
-- [ ] Raw output saved for `show ip interface brief`.
-- [ ] Loopbacks configured and verified with saved output.
-- [ ] Parsed data printed and included in the report.
-- [ ] `data/reports/device_report.txt` exists and includes hostname/model/uptime.
+- [ ] `logs/lab.log` exists and includes LAB2_START/LAB2_END and all required markers.
+- [ ] Netmiko connection succeeds; output saved and parsed.
+- [ ] NTC templates applied correctly with structured output.
+- [ ] Device summary printed or saved with REPORT_SAVED logged.
+- [ ] Code follows modular structure and uses secure credential handling.
+- [ ] All work pushed and pull request open before deadline.

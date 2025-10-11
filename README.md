@@ -191,4 +191,4 @@ print(config)
 
 
 ## License
-© 2025 Your Name — Classroom use.
+© 2025 Sheldon Swanson — Classroom use.
