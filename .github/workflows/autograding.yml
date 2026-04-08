@@ -1,0 +1,113 @@
+name: Autograding Tests
+
+on:
+  push:
+  workflow_dispatch:
+  repository_dispatch:
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: main.py Present (5 pts)
+        id: main-py-present
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "main.py present"
+          setup-command: ""
+          command: "test -f src/main.py || test -f main.py"
+          timeout: 10
+          max-score: 5
+
+      - name: Step 3 Marker (5 pts)
+        id: step3-marker
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "step3 credentials marker"
+          setup-command: ""
+          command: "test -f logs/lab.log && grep -q '\\[CREDENTIALS_COLLECTED\\]' logs/lab.log"
+          timeout: 10
+          max-score: 5
+
+      - name: Step 4 Marker (10 pts)
+        id: step4-marker
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "step4 connect marker"
+          setup-command: ""
+          command: "test -f logs/lab.log && grep -Eq '\\[(CONNECT_OK|CONNECT_FAIL)\\]' logs/lab.log"
+          timeout: 10
+          max-score: 10
+
+      - name: Step 5 Marker Count (10 pts)
+        id: step5-markers
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "step5 cmd_run markers"
+          setup-command: ""
+          command: "test -f logs/lab.log && [ \"$(grep -Eo '\\[CMD_RUN[^]]*\\]' logs/lab.log | wc -l | tr -d ' ')\" -ge 3 ]"
+          timeout: 10
+          max-score: 10
+
+      - name: Step 6 Marker (10 pts)
+        id: step6-marker
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "step6 parse marker"
+          setup-command: ""
+          command: "test -f logs/lab.log && grep -Eq '\\[PARSE_OK[^]]*\\]' logs/lab.log"
+          timeout: 10
+          max-score: 10
+
+      - name: Step 7 Marker (10 pts)
+        id: step7-marker
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "step7 report marker"
+          setup-command: ""
+          command: "test -f logs/lab.log && grep -q '\\[REPORT_SAVED\\]' logs/lab.log"
+          timeout: 10
+          max-score: 10
+
+      - name: Step 8 Start Marker (5 pts)
+        id: step8-start
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "step8 start marker"
+          setup-command: ""
+          command: "test -f logs/lab.log && grep -Eq '\\[(LAB1-START|LAB2_START)\\]' logs/lab.log"
+          timeout: 10
+          max-score: 5
+
+      - name: Step 8 End Marker (5 pts)
+        id: step8-end
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "step8 end marker"
+          setup-command: ""
+          command: "test -f logs/lab.log && grep -Eq '\\[(LAB1-END|LAB2_END)\\]' logs/lab.log"
+          timeout: 10
+          max-score: 5
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          MAIN-PY-PRESENT_RESULTS: "${{ steps.main-py-present.outputs.result }}"
+          STEP3-MARKER_RESULTS: "${{ steps.step3-marker.outputs.result }}"
+          STEP4-MARKER_RESULTS: "${{ steps.step4-marker.outputs.result }}"
+          STEP5-MARKERS_RESULTS: "${{ steps.step5-markers.outputs.result }}"
+          STEP6-MARKER_RESULTS: "${{ steps.step6-marker.outputs.result }}"
+          STEP7-MARKER_RESULTS: "${{ steps.step7-marker.outputs.result }}"
+          STEP8-START_RESULTS: "${{ steps.step8-start.outputs.result }}"
+          STEP8-END_RESULTS: "${{ steps.step8-end.outputs.result }}"
+        with:
+          runners: main-py-present,step3-marker,step4-marker,step5-markers,step6-marker,step7-marker,step8-start,step8-end
