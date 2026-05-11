@@ -33,7 +33,7 @@
 8. [Step 5 — Run Show Commands](#step-5--run-show-commands)
 9. [Step 6 — Parse Output with NTC Templates](#step-6--parse-output-with-ntc-templates)
 10. [Step 7 — Generate Report and Summary](#step-7--generate-report-and-summary)
-11. [Step 8 — Implement the Direct Execution Check](#step-8---impliment-the-direct-execution-check)
+11. [Step 8 — Implement the Direct Execution Check](#step-8---implement-the-direct-execution-check)
 12. [Step 9 — Refactor, Log, and Submit](#step-9--refactor-log-and-submit)
 13. [FAQ](#faq)
 14. [🔧 Troubleshooting & Pro Tips](#-troubleshooting--pro-tips)
@@ -198,21 +198,21 @@ Log `REPORT_SAVED` once the file is written.
 **Log marker to add:**  
 `[REPORT_SAVED]`
 
-## Step 8 - Impliment the Direct Execution Check
+## Step 8 — Implement the Direct Execution Check
 
 **Goal:** Require that the code is executed directly from the `main.py` file
 
 **What to do:**
-Impliment the Direct Execution Check
-Include a log message before the `main()` function for `[LAB1-START]`
-Include a log message after the `main()` function for `[LAB1-END]`
+Implement the Direct Execution Check.
+Include a log message before the `main()` function for `[LAB2-START]`.
+Include a log message after the `main()` function for `[LAB2-END]`.
 
 **You're done when:**
 
-- Your main function only executes if called directly
+- Your main function only executes if called directly.
 
-**Log Marker**
-`[LAB1-START, LAB1-END]`
+**Log Marker:**
+`[LAB2-START, LAB2-END]`
 
 ## Step 9 — Refactor, Log, and Submit
 
@@ -268,9 +268,9 @@ Commit all changes, push to GitHub, and open a pull request.
 | Step 6 | All outputs parsed successfully (`PARSE_OK` markers) | 10 |
 | Step 7 | Readable report printed/saved (`REPORT_SAVED`) | 10 |
 | Step 4–7 | Handled exceptions gracefully and logged results | 5 |
-| Step 8 | Lab Start message logged (`LAB1-START`) | 5 |
-| Step 8 | Lab Start message logged (`LAB1-END`) | 5 |
-| Step 9 | Clean module structure (class + parser functions imported and used) | 5 |
+| Step 8 | Lab Start message logged (`LAB2-START`) | 5 |
+| Step 8 | Lab End message logged (`LAB2-END`) | 5 |
+| Step 9 | Modular code structure (main.py entrypoint; helpers in src/) | 5 |
 | Step 9 | Commit, push, and PR opened; logs present with start/end markers | 5 |
 | **Total** |  | **75** |
 

@@ -13,101 +13,147 @@ permissions:
 jobs:
   run-autograding-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.actor != 'github-classroom[bot]'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: main.py Present (5 pts)
+      - name: Grade - main.py present
         id: main-py-present
+        if: always()
         uses: classroom-resources/autograding-command-grader@v1
         with:
-          test-name: "main.py present"
+          test-name: "Step 9 - main.py present"
           setup-command: ""
-          command: "test -f src/main.py || test -f main.py"
+          command: "test -f main.py || test -f src/main.py"
           timeout: 10
           max-score: 5
 
-      - name: Step 3 Marker (5 pts)
+      - name: Grade - requirements.txt present
+        id: requirements-present
+        if: always()
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Step 2 - requirements.txt present"
+          setup-command: ""
+          command: "test -f requirements.txt"
+          timeout: 10
+          max-score: 5
+
+      - name: Grade - Credentials collected marker
         id: step3-marker
+        if: always()
         uses: classroom-resources/autograding-command-grader@v1
         with:
-          test-name: "step3 credentials marker"
+          test-name: "Step 3 - CREDENTIALS_COLLECTED"
           setup-command: ""
-          command: "test -f logs/lab.log && grep -q '\\[CREDENTIALS_COLLECTED\\]' logs/lab.log"
+          command: 'test -f logs/lab.log && grep -q "CREDENTIALS_COLLECTED" logs/lab.log'
           timeout: 10
           max-score: 5
 
-      - name: Step 4 Marker (10 pts)
+      - name: Grade - Connect marker
         id: step4-marker
+        if: always()
         uses: classroom-resources/autograding-command-grader@v1
         with:
-          test-name: "step4 connect marker"
+          test-name: "Step 4 - CONNECT_OK or CONNECT_FAIL"
           setup-command: ""
-          command: "test -f logs/lab.log && grep -Eq '\\[(CONNECT_OK|CONNECT_FAIL)\\]' logs/lab.log"
+          command: 'test -f logs/lab.log && grep -Eq "CONNECT_OK|CONNECT_FAIL" logs/lab.log'
           timeout: 10
           max-score: 10
 
-      - name: Step 5 Marker Count (10 pts)
+      - name: Grade - CMD_RUN markers (>=3)
         id: step5-markers
+        if: always()
         uses: classroom-resources/autograding-command-grader@v1
         with:
-          test-name: "step5 cmd_run markers"
+          test-name: "Step 5 - CMD_RUN markers (>=3)"
           setup-command: ""
-          command: "test -f logs/lab.log && [ \"$(grep -Eo '\\[CMD_RUN[^]]*\\]' logs/lab.log | wc -l | tr -d ' ')\" -ge 3 ]"
+          command: 'test -f logs/lab.log && [ "$(grep -Eo "CMD_RUN" logs/lab.log | wc -l | tr -d " ")" -ge 3 ]'
           timeout: 10
           max-score: 10
 
-      - name: Step 6 Marker (10 pts)
+      - name: Grade - PARSE_OK marker
         id: step6-marker
+        if: always()
         uses: classroom-resources/autograding-command-grader@v1
         with:
-          test-name: "step6 parse marker"
+          test-name: "Step 6 - PARSE_OK"
           setup-command: ""
-          command: "test -f logs/lab.log && grep -Eq '\\[PARSE_OK[^]]*\\]' logs/lab.log"
+          command: 'test -f logs/lab.log && grep -Eq "PARSE_OK" logs/lab.log'
           timeout: 10
           max-score: 10
 
-      - name: Step 7 Marker (10 pts)
+      - name: Grade - REPORT_SAVED marker
         id: step7-marker
+        if: always()
         uses: classroom-resources/autograding-command-grader@v1
         with:
-          test-name: "step7 report marker"
+          test-name: "Step 7 - REPORT_SAVED"
           setup-command: ""
-          command: "test -f logs/lab.log && grep -q '\\[REPORT_SAVED\\]' logs/lab.log"
+          command: 'test -f logs/lab.log && grep -q "REPORT_SAVED" logs/lab.log'
           timeout: 10
           max-score: 10
 
-      - name: Step 8 Start Marker (5 pts)
-        id: step8-start
+      - name: Grade - Exception handling present
+        id: exception-handling
+        if: always()
         uses: classroom-resources/autograding-command-grader@v1
         with:
-          test-name: "step8 start marker"
+          test-name: "Step 4-7 - Exception handling in code"
           setup-command: ""
-          command: "test -f logs/lab.log && grep -Eq '\\[(LAB1-START|LAB2_START)\\]' logs/lab.log"
+          command: 'grep -rEq "try:|except" --include="*.py" .'
           timeout: 10
           max-score: 5
 
-      - name: Step 8 End Marker (5 pts)
-        id: step8-end
+      - name: Grade - LAB2 Start marker
+        id: step8-start
+        if: always()
         uses: classroom-resources/autograding-command-grader@v1
         with:
-          test-name: "step8 end marker"
+          test-name: "Step 8 - LAB2-START or LAB2_START"
           setup-command: ""
-          command: "test -f logs/lab.log && grep -Eq '\\[(LAB1-END|LAB2_END)\\]' logs/lab.log"
+          command: 'test -f logs/lab.log && grep -Eq "LAB2[-_]START" logs/lab.log'
+          timeout: 10
+          max-score: 5
+
+      - name: Grade - LAB2 End marker
+        id: step8-end
+        if: always()
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Step 8 - LAB2-END or LAB2_END"
+          setup-command: ""
+          command: 'test -f logs/lab.log && grep -Eq "LAB2[-_]END" logs/lab.log'
+          timeout: 10
+          max-score: 5
+
+      - name: Grade - Log file committed
+        id: logs-committed
+        if: always()
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Step 9 - logs/lab.log committed"
+          setup-command: ""
+          command: 'test -s logs/lab.log'
           timeout: 10
           max-score: 5
 
       - name: Autograding Reporter
+        if: always()
         uses: classroom-resources/autograding-grading-reporter@v1
         env:
-          MAIN-PY-PRESENT_RESULTS: "${{ steps.main-py-present.outputs.result }}"
-          STEP3-MARKER_RESULTS: "${{ steps.step3-marker.outputs.result }}"
-          STEP4-MARKER_RESULTS: "${{ steps.step4-marker.outputs.result }}"
-          STEP5-MARKERS_RESULTS: "${{ steps.step5-markers.outputs.result }}"
-          STEP6-MARKER_RESULTS: "${{ steps.step6-marker.outputs.result }}"
-          STEP7-MARKER_RESULTS: "${{ steps.step7-marker.outputs.result }}"
-          STEP8-START_RESULTS: "${{ steps.step8-start.outputs.result }}"
-          STEP8-END_RESULTS: "${{ steps.step8-end.outputs.result }}"
+          MAIN_PY_PRESENT_RESULTS: "${{ steps.main-py-present.outputs.result }}"
+          REQUIREMENTS_PRESENT_RESULTS: "${{ steps.requirements-present.outputs.result }}"
+          STEP3_MARKER_RESULTS: "${{ steps.step3-marker.outputs.result }}"
+          STEP4_MARKER_RESULTS: "${{ steps.step4-marker.outputs.result }}"
+          STEP5_MARKERS_RESULTS: "${{ steps.step5-markers.outputs.result }}"
+          STEP6_MARKER_RESULTS: "${{ steps.step6-marker.outputs.result }}"
+          STEP7_MARKER_RESULTS: "${{ steps.step7-marker.outputs.result }}"
+          EXCEPTION_HANDLING_RESULTS: "${{ steps.exception-handling.outputs.result }}"
+          STEP8_START_RESULTS: "${{ steps.step8-start.outputs.result }}"
+          STEP8_END_RESULTS: "${{ steps.step8-end.outputs.result }}"
+          LOGS_COMMITTED_RESULTS: "${{ steps.logs-committed.outputs.result }}"
         with:
-          runners: main-py-present,step3-marker,step4-marker,step5-markers,step6-marker,step7-marker,step8-start,step8-end
+          runners: main-py-present,requirements-present,step3-marker,step4-marker,step5-markers,step6-marker,step7-marker,exception-handling,step8-start,step8-end,logs-committed
